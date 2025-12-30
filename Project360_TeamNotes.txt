@@ -1,0 +1,94 @@
+
+Project360 – Components, Functionality & Tech
+============================================
+
+Overview
+--------
+A React + Vite + Tailwind CSS loyalty UI with Offers, Redeem flow, Redemption History (cards only), Transactions, and a Dashboard. Premium body background and centered footer.
+
+Tech Stack
+----------
+- React 18 (Functional components, hooks)
+- Vite 5 (dev server & build)
+- React Router v6 (routes)
+- Tailwind CSS 3 (utility-first styling)
+- localStorage (client-side persistence)
+
+Routing
+-------
+- /dashboard – Dashboard overview
+- /offers – Offers scroller + grid
+- /redeem/:promoId – Confirm & Redeem page (store selector, modal)
+- /redemptions – Redemption History (cards only)
+- /transactions – Transactions table + KPIs
+
+Key Components & Pages
+----------------------
+- Header.jsx: Gradient header, navigation links
+- Footer.jsx: Center-aligned pills, subtle gradient background
+- Modal.jsx: Generic modal wrapper for confirmations
+- PointsSummary.jsx: Hero banner + points overview
+- StatCards.jsx: KPI cards (Total, Today, Redeemed)
+- DailyActivities.jsx: Claim activities (adds claim transaction)
+- TransactionList.jsx: Recent transactions table
+- RewardCard.jsx: Offer card with Redeem button; shows alert if insufficient points
+- Dashboard.jsx: Composes summary, activities, transactions, offers scroller
+- Offers.jsx: Horizontal scroller + grid of RewardCard
+- Redeem.jsx: Confirm & Redeem page with store selector, modal, redirects to -> /redemptions
+- Redemptions.jsx: Redemption history cards ONLY (from localStorage)
+- Transactions.jsx: Transactions table with KPIs
+
+State & Persistence
+-------------------
+- Context (CustomerContext.jsx) keeps: customer, transactions, promotions, redeemed IDs, derived state (remainingPoints, nextExpiryDate, todayPoints, redeemedTotal)
+- localStorage keys:
+  - p360_transactions: cached transactions array
+  - p360_redeemed: redeemed promo IDs
+  - p360_redemptions: redemption receipts list (for History page)
+
+Core Behaviors
+--------------
+- Insufficient Points Alert: On Offer card click (RewardCard.jsx) and on Redeem confirm (Redeem.jsx)
+- Redeem Flow: Redeem adds a REDEMPTION txn, updates points, persists receipt -> localStorage (p360_redemptions), shows modal, then redirect to /redemptions
+- Claim Flow: Adds CLAIM txn and updates points (CustomerContext.claimActivity)
+- Member Offers: Scroller with snap & styled scrollbar; grid below in Offers page
+
+Styling
+-------
+- Tailwind theme extended (colors, shadows)
+- Premium body background: styles/base.css (.bg-page)
+- Buttons: Gradient claim/redeem; outline variant
+- Cards: Strong shadows, hover elevation
+- Footer: Centered with gradient background
+
+Data & Services
+---------------
+- data/mock.js: Seed data for customer, transactions, promotions
+- services/api.js: Mock fetchers, with comments for backend endpoints
+
+Backend Wiring (Spring Boot – future)
+------------------------------------
+Endpoints to implement:
+- GET  /api/customer
+- GET  /api/transactions
+- GET  /api/promotions
+- POST /api/claim     { activityId }  // server enforces daily limits
+- POST /api/redeem    { promoId, store } // server validates points, once-only, returns receipt
+
+Controller sample:
+- LoyaltyController with mappings to the above endpoints.
+Service sample:
+- LoyaltyService with business rules: tier check, once-only redemption, points deduction, transaction creation.
+Security:
+- JWT authentication, HTTPS in production.
+
+Run & Demo
+---------
+1) npm install
+2) npm run dev
+3) Open http://localhost:5173
+
+Notes
+-----
+- All UI behaviors are client-side mock; replace fetch stubs in services/api.js when backend is ready.
+- Keep localStorage namespaces (p360_*) consistent to avoid conflicts.

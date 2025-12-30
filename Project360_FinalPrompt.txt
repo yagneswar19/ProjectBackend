@@ -1,0 +1,939 @@
+
+You are a world-class React + Vite + Tailwind CSS code generator. Create an EXACT copy of a project named **Project360** with the following structure and file contents. Do not add or remove anything. Use React Router v6. Keep all code exactly as specified.
+
+**Project name**: project360
+**Stack**: React 18, Vite 5, Tailwind CSS 3, React Router 6
+**Goal**: Loyalty UI – Offers, Redeem flow (insufficient points alert), Redemption History (cards only), Transactions, Dashboard, premium body background, centered footer.
+
+Create the files below with the exact contents:
+
+---
+**App.jsx**
+```jsx
+
+import React from 'react'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import Header from './components/Header.jsx'
+import Footer from './components/Footer.jsx'
+import Dashboard from './pages/Dashboard.jsx'
+import Offers from './pages/Offers.jsx'
+import Redeem from './pages/Redeem.jsx'
+import Redemptions from './pages/Redemptions.jsx'
+import Transactions from './pages/Transactions.jsx'
+import { CustomerProvider } from './context/CustomerContext.jsx'
+
+export default function App(){
+  return (
+    <CustomerProvider>
+      <Header />
+      <main className="py-6">
+        <Routes>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/offers" element={<Offers />} />
+          <Route path="/redeem/:promoId" element={<Redeem />} />
+          <Route path="/redemptions" element={<Redemptions />} />
+          <Route path="/transactions" element={<Transactions />} />
+        </Routes>
+      </main>
+      <Footer />
+    </CustomerProvider>
+  )
+}
+
+```
+
+---
+**README.md**
+```md
+
+# Project360 – Loyalty UI
+
+- Insufficient points alert when trying to redeem.
+- Redeem confirmation -> persists receipt into localStorage and redirects to **Redemptions** page.
+- Redemptions page shows **history only** (cards).
+- Attractive body background, centered footer, box shadows everywhere.
+
+## Dev
+npm install
+npm run dev
+
+## Backend notes (to integrate later)
+See inline comments in `services/api.js` and `context/CustomerContext.jsx`.
+
+```
+
+---
+**components/DailyActivities.jsx**
+```jsx
+
+import React from 'react'
+import { useCustomer } from '../context/CustomerContext.jsx'
+const activities = [
+  { id:'login', title:'Daily Login Bonus', points:50, image:'https://images.unsplash.com/photo-1526378722484-b1b1f3b1a4f3?q=80&w=1200&auto=format&fit=crop' },
+  { id:'review', title:'Write a Product Review', points:100, image:'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=1200&auto=format&fit=crop' },
+  { id:'share', title:'Share on Social', points:75, image:'https://images.unsplash.com/photo-1494172961521-33799ddd47c1?q=80&w=1200&auto=format&fit=crop' },
+  { id:'refer', title:'Refer a Friend', points:200, image:'https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1200&auto=format&fit=crop' },
+]
+export default function DailyActivities(){
+  const { actions } = useCustomer()
+  return (
+    <section className="space-y-3">
+      <h3 className="text-lg font-semibold">Daily Activities</h3>
+      <p className="text-sm text-gray-600">Claim again after reload (demo) and see transactions update.</p>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {activities.map(a => (
+          <div key={a.id} className="card overflow-hidden">
+            <img src={a.image} alt={a.title} className="card-image h-28"/>
+            <div className="card-padding">
+              <h4 className="font-semibold">{a.title}</h4>
+              <p className="text-sm text-gray-600">Earn {a.points} points</p>
+              <div className="mt-3 flex items-center gap-2">
+                <span className="text-xs text-gray-500">Claim resets on reload</span>
+                <button className="ml-auto btn-claim btn-lg btn-icon" onClick={()=>actions.claimActivity({id:a.id, points:a.points, note:a.title, store:'Online'})}><span>Claim</span><span>✨</span></button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+```
+
+---
+**components/Footer.jsx**
+```jsx
+
+import React from 'react'
+
+const Pill = ({ children }) => (
+  <div className="px-3 py-2 rounded-full bg-white/70 text-gray-800 text-sm inline-flex items-center gap-2 shadow-soft">{children}</div>
+)
+const Icon = ({ name, className }) => {
+  const icons = {
+    mail: (<svg className={className} viewBox="0 0 24 24" fill="none"><path d="M3 7l9 6 9-6" stroke="currentColor" strokeWidth="2"/><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="2"/></svg>),
+    phone: (<svg className={className} viewBox="0 0 24 24" fill="none"><path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2a1 1 0 011.05-.24 11.72 11.72 0 003.68.59 1 1 0 011 1v3.5a1 1 0 01-1 1A17.5 17.5 0 013 6a1 1 0 011-1h3.5a1 1 0 011 1 11.72 11.72 0 00.59 3.68 1 1 0 01-.24 1.05l-2.23 2.06z" stroke="currentColor" strokeWidth="2"/></svg>),
+    instagram: (<svg className={className} viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="2"/><circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor"/></svg>),
+    twitter: (<svg className={className} viewBox="0 0 24 24" fill="none"><path d="M22 5.98a7.7 7.7 0 01-2.19.6 3.8 3.8 0 001.67-2.1 7.6 7.6 0 01-2.41.93A3.8 3.8 0 0015.5 4a3.8 3.8 0 00-3.7 4.67 10.8 10.8 0 01-7.84-3.98 3.8 3.8 0 001.18 5.07 3.7 3.7 0 01-1.72-.48v.05a3.8 3.8 0 003.05 3.72 3.9 3.9 0 01-1 .14c-.25 0-.5-.02-.73-.07a3.8 3.8 0 003.55 2.64A7.7 7.7 0 013 19.55 10.8 10.8 0 009 21c7.02 0 10.86-5.81 10.86-10.85v-.5A7.6 7.6 0 0022 5.98z" stroke="currentColor" strokeWidth="1.5"/></svg>),
+    facebook: (<svg className={className} viewBox="0 0 24 24" fill="none"><path d="M14 9h3V5h-3c-2.21 0-4 1.79-4 4v2H7v4h3v6h4v-6h3l1-4h-4V9c0-.55.45-1 1-1z" fill="currentColor"/></svg>),
+  }
+  return icons[name] || null
+}
+
+export default function Footer(){
+  return (
+    <footer className="bg-gradient-to-r from-brand-50 to-white border-t border-gray-200 mt-12">
+      <div className="container-responsive py-8 space-y-4 footer-center">
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <Pill><Icon name="mail" className="w-5 h-5"/> support@project360.example</Pill>
+          <Pill><Icon name="phone" className="w-5 h-5"/> +91 90000 00000</Pill>
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <Pill><Icon name="instagram" className="w-5 h-5"/> Instagram</Pill>
+          <Pill><Icon name="twitter" className="w-5 h-5"/> Twitter</Pill>
+          <Pill><Icon name="facebook" className="w-5 h-5"/> Facebook</Pill>
+        </div>
+        <div className="text-sm text-gray-500">© 2025 Project360 · Retail Loyalty Program</div>
+      </div>
+    </footer>
+  )
+}
+
+```
+
+---
+**components/Header.jsx**
+```jsx
+
+import React from 'react'
+import { NavLink } from 'react-router-dom'
+
+export default function Header(){
+  return (
+    <header className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white sticky top-0 z-30 shadow">
+      <div className="container-responsive py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20">💰</div>
+          <span className="text-xl font-semibold">Project360</span>
+        </div>
+        <nav className="flex items-center gap-2">
+          {[
+            {to:'/dashboard', label:'Dashboard'},
+            {to:'/offers', label:'Offers'},
+            {to:'/redemptions', label:'Redemptions'},
+            {to:'/transactions', label:'Transactions'},
+          ].map((item)=> (
+            <NavLink key={item.label} to={item.to} className={({isActive})=>`px-3 py-2 rounded ${isActive? 'bg-white/20':'hover:bg-white/10'}`}>{item.label}</NavLink>
+          ))}
+        </nav>
+      </div>
+    </header>
+  )
+}
+
+```
+
+---
+**components/Modal.jsx**
+```jsx
+
+import React from 'react'
+export default function Modal({ open, onClose, children }){
+  if (!open) return null
+  return (
+    <div className="fixed inset-0 z-50">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose}></div>
+      <div className="absolute inset-0 flex items-center justify-center p-4">
+        <div className="card card-padding max-w-lg w-full">{children}</div>
+      </div>
+    </div>
+  )
+}
+
+```
+
+---
+**components/PointsSummary.jsx**
+```jsx
+
+import React from 'react'
+import { useCustomer } from '../context/CustomerContext.jsx'
+function formatDate(d){ if(!d) return '—'; try { return new Date(d).toLocaleDateString('en-IN') } catch { return d } }
+export default function PointsSummary(){
+  const { customer, remainingPoints, nextExpiryDate } = useCustomer()
+  return (
+    <section className="space-y-4">
+      <div className="card overflow-hidden">
+        <div className="relative">
+          <img src="https://images.unsplash.com/photo-1611162618071-b39e7e5150b1?q=80&w=1600&auto=format&fit=crop" alt="Loyalty" className="hero-image"/>
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-900/40 to-transparent"></div>
+          <div className="absolute inset-0 flex items-center">
+            <div className="px-6 py-4 text-white">
+              <h2 className="text-2xl sm:text-3xl font-semibold">Welcome, {customer?.name?.split(' ')[0] || 'Member'}</h2>
+              <p className="text-sm sm:text-base text-indigo-100">Track points & redeem rewards</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="card card-padding flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h3 className="text-lg font-semibold">Points Summary</h3>
+          <p className="text-sm text-gray-600">Member: {customer?.name} · Tier: {customer?.tier}</p>
+          <div className="mt-3 inline-flex items-center bg-gray-100 text-gray-800 rounded-lg px-3 py-2">
+            <span className="text-sm">Next Expiry</span>
+            <span className="ml-2 font-medium">{formatDate(nextExpiryDate)}</span>
+          </div>
+        </div>
+        <div className="text-right">
+          <p className="text-sm text-gray-500">Current Balance</p>
+          <p className="text-3xl font-bold text-gray-900">{remainingPoints}</p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+```
+
+---
+**components/RewardCard.jsx**
+```jsx
+
+import React from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useCustomer } from '../context/CustomerContext.jsx'
+
+export default function RewardCard({ promo }){
+  const { actions, remainingPoints } = useCustomer()
+  const navigate = useNavigate()
+  const can = actions.canRedeem(promo)
+
+  const handleRedeemClick = (e) => {
+    if (!can) {
+      e.preventDefault()
+      alert(`Insufficient points: you have ${remainingPoints} pts, but this costs ${promo.cost} pts.`)
+    } else {
+      navigate(`/redeem/${promo.id}`)
+    }
+  }
+
+  return (
+    <div className="card overflow-hidden">
+      <img src={promo.image} alt={promo.title} className="card-image h-40"/>
+      <div className="card-padding">
+        <div className="flex items-center justify-between">
+          <h4 className="text-lg font-semibold">{promo.title}</h4>
+          {promo.tierOnly && <span className="badge-gold">Gold Only</span>}
+        </div>
+        <p className="text-sm text-gray-600 mt-1">{promo.description}</p>
+        <div className="mt-4 flex items-center justify-between">
+          <span className="chip">Cost: {promo.cost} pts</span>
+          <button className="btn-redeem btn-lg btn-icon" onClick={handleRedeemClick}><span>Redeem</span><span>🎁</span></button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+```
+
+---
+**components/StatCards.jsx**
+```jsx
+
+import React from 'react'
+import { useCustomer } from '../context/CustomerContext.jsx'
+export default function StatCards(){
+  const { remainingPoints, todayPoints, redeemedTotal } = useCustomer()
+  const stats = [
+    { title: 'Total Points', value: remainingPoints, color:'border-emerald-300', accent:'text-emerald-600' },
+    { title: "Today's Points Earned", value: todayPoints, color:'border-sky-300', accent:'text-sky-600' },
+    { title: 'Total Redeemed Points', value: redeemedTotal, color:'border-amber-300', accent:'text-amber-600' },
+  ]
+  return (
+    <section className="grid sm:grid-cols-3 gap-4">
+      {stats.map((s,i)=> (
+        <div key={i} className={`card card-padding border-2 ${s.color}`}>
+          <p className="text-sm text-gray-700 font-medium">{s.title}</p>
+          <p className={`text-3xl font-bold mt-2 ${s.accent}`}>{s.value}</p>
+        </div>
+      ))}
+    </section>
+  )
+}
+
+```
+
+---
+**components/TransactionList.jsx**
+```jsx
+
+import React from 'react'
+import { useCustomer } from '../context/CustomerContext.jsx'
+function formatDate(d){ try { return new Date(d).toLocaleDateString('en-IN') } catch { return d } }
+export default function TransactionList({ limit=10 }){
+  const { transactions } = useCustomer()
+  const list = transactions.slice(0, limit)
+  return (
+    <section className="card">
+      <div className="card-padding">
+        <h3 className="text-lg font-semibold">Recent Transactions (Top {limit})</h3>
+        <div className="mt-3 overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="text-left text-gray-600">
+                <th className="py-2 pr-4">Date</th>
+                <th className="py-2 pr-4">Type</th>
+                <th className="py-2 pr-4">Points Earned</th>
+                <th className="py-2 pr-4">Points Redeemed</th>
+                <th className="py-2 pr-4">Store/Activity</th>
+                <th className="py-2 pr-4">Expiry</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {list.map(t => (
+                <tr key={t.id}>
+                  <td className="py-2 pr-4">{formatDate(t.date)}</td>
+                  <td className="py-2 pr-4">{t.type}</td>
+                  <td className={t.points>0? 'py-2 pr-4 text-emerald-600 font-semibold':'py-2 pr-4'}>{t.points>0? `+${t.points}`:'-'}</td>
+                  <td className={t.points<0? 'py-2 pr-4 text-amber-600 font-semibold':'py-2 pr-4'}>{t.points<0? `${Math.abs(t.points)}`:'-'}</td>
+                  <td className="py-2 pr-4">{t.store || t.note || '—'}</td>
+                  <td className="py-2 pr-4">{t.expiry ? formatDate(t.expiry) : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+```
+
+---
+**context/CustomerContext.jsx**
+```jsx
+
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { fetchCustomer, fetchTransactions, fetchPromotions } from '../services/api.js'
+
+const CustomerContext = createContext(null)
+export const useCustomer = () => useContext(CustomerContext)
+
+function calcRemainingPoints(transactions){ return transactions.reduce((s,t)=> s + (t.points||0), 0) }
+function nextExpiry(transactions){ const u = transactions.filter(t=>t.expiry).map(t=>new Date(t.expiry)).sort((a,b)=>a-b); return u.length? u[0].toISOString().slice(0,10): null }
+function todaysEarned(transactions){ const today = new Date().toISOString().slice(0,10); return transactions.filter(t=>t.date===today && t.points>0).reduce((s,t)=>s+t.points,0) }
+function totalRedeemed(transactions){ return Math.abs(transactions.filter(t=>t.points<0).reduce((s,t)=>s+t.points,0)) }
+function uid(prefix='ID'){ return `${prefix}-${Math.floor(Date.now()/1000)}-${Math.random().toString(36).slice(2,8).toUpperCase()}` }
+
+export function CustomerProvider({ children }){
+  const [customer, setCustomer] = useState(null)
+  const [transactions, setTransactions] = useState(()=>{ const saved = localStorage.getItem('p360_transactions'); return saved? JSON.parse(saved): null })
+  const [promotions, setPromotions] = useState([])
+  const [redeemedPromoIds, setRedeemedPromoIds] = useState(()=>{ const saved = localStorage.getItem('p360_redeemed'); return saved? JSON.parse(saved): [] })
+
+  useEffect(()=>{ (async()=>{ const c = await fetchCustomer(); setCustomer(c); const t = transactions ?? await fetchTransactions(); setTransactions(t); const p = await fetchPromotions(); setPromotions(p) })() }, [])
+  useEffect(()=>{ if(transactions) localStorage.setItem('p360_transactions', JSON.stringify(transactions)) }, [transactions])
+  useEffect(()=>{ localStorage.setItem('p360_redeemed', JSON.stringify(redeemedPromoIds)) }, [redeemedPromoIds])
+
+  const remainingPoints = useMemo(()=> transactions? calcRemainingPoints(transactions): 0, [transactions])
+  const nextExpiryDate = useMemo(()=> transactions? nextExpiry(transactions): null, [transactions])
+  const todayPoints = useMemo(()=> transactions? todaysEarned(transactions): 0, [transactions])
+  const redeemedTotal = useMemo(()=> transactions? totalRedeemed(transactions): 0, [transactions])
+
+  const claimActivity = ({ id, points, note, store }) => {
+    const txn = { id: uid(id.toUpperCase()), type:'CLAIM', amount:0, points, date: new Date().toISOString().slice(0,10), expiry: new Date(new Date().setMonth(new Date().getMonth()+3)).toISOString().slice(0,10), note, store }
+    setTransactions(prev => [txn, ...(prev||[])])
+  }
+
+  const canRedeem = (promo) => { if(!promo) return false; if(redeemedPromoIds.includes(promo.id)) return false; return remainingPoints >= (promo.cost||0) }
+
+  // DEMO redeem. BACKEND: POST /api/redeem { promoId, store } and return receipt
+  const redeem = (promo, store='Online') => {
+    if(!canRedeem(promo)) return { ok:false, error:'Insufficient points' }
+    const code = uid('CONF')
+    const txnId = uid('RED')
+    const txn = { id:txnId, type:'REDEMPTION', amount:0, points:-(promo.cost||0), date: new Date().toISOString().slice(0,10), expiry:null, note: promo.title, store }
+    setTransactions(prev=>[txn, ...(prev||[])])
+    setRedeemedPromoIds(prev=>[...prev, promo.id])
+    const updatedRemaining = remainingPoints - (promo.cost||0)
+    const receipt = { ok:true, txnId, code, date: txn.date, remaining: updatedRemaining, store }
+    // Append to redemption history
+    try {
+      const raw = localStorage.getItem('p360_redemptions')
+      const list = raw ? JSON.parse(raw) : []
+      list.unshift({ promoId: promo.id, promoTitle: promo.title, image: promo.image, store, txnId, code, date: txn.date, remaining: updatedRemaining })
+      localStorage.setItem('p360_redemptions', JSON.stringify(list))
+    } catch {}
+    return receipt
+  }
+
+  const value = { customer, transactions: transactions||[], promotions, remainingPoints, nextExpiryDate, todayPoints, redeemedTotal, redeemedPromoIds, actions:{ claimActivity, redeem, canRedeem } }
+  return <CustomerContext.Provider value={value}>{children}</CustomerContext.Provider>
+}
+
+```
+
+---
+**data/mock.js**
+```jsx
+
+export const customerSeed = { id:'CUST-1001', name:'Yagneswar Mitta', tier:'Gold' }
+export const transactionsSeed = [
+  { id:'TXN-251225-01', type:'PURCHASE', amount:12000, points:1200, date:'2025-12-25', expiry:'2026-03-25', note:'Jeans & Jacket', store:'Pune Fashion Mall' },
+  { id:'TXN-111225-01', type:'PURCHASE', amount:8000, points:800, date:'2025-12-11', expiry:'2026-02-23', note:'Home Decor', store:'Lifestyle Store – Koregaon Park' },
+  { id:'TXN-151125-RED', type:'REDEMPTION', amount:0, points:-500, date:'2025-11-15', expiry:null, note:'₹500 Gift Card', store:'Online' },
+  { id:'TXN-251225-02', type:'PURCHASE', amount:12000, points:1200, date:'2025-12-25', expiry:'2026-03-25', note:'Shoes', store:'Pune Fashion Mall' },
+  { id:'TXN-251225-03', type:'PURCHASE', amount:12000, points:1200, date:'2025-12-25', expiry:'2026-03-25', note:'Accessories', store:'Pune Fashion Mall' },
+]
+export const promotionsSeed = [
+  { id:'PROMO-200', title:'₹200 Gift Card', cost:250, tierOnly:false, image:'https://images.unsplash.com/photo-1473181488821-2d23949a045a?q=80&w=1200&auto=format&fit=crop', description:'Perfect for small accessories or add‑ons.' },
+  { id:'PROMO-500', title:'₹500 Gift Card', cost:500, tierOnly:false, image:'https://images.unsplash.com/photo-1544441890-675c1de0f3f3?q=80&w=1200&auto=format&fit=crop', description:'Redeem for shopping across partner stores.' },
+  { id:'PROMO-10DISC', title:'10% Discount Voucher', cost:600, tierOnly:false, image:'https://images.unsplash.com/photo-1617876688301-3e0a8c1d96f6?q=80&w=1200&auto=format&fit=crop', description:'Get 10% off on a purchase of ₹2000 or more.' },
+  { id:'PROMO-FEST15', title:'Festive 15% Off', cost:900, tierOnly:false, image:'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1200&auto=format&fit=crop', description:'Seasonal sale voucher for lifestyle category.' },
+  { id:'PROMO-GROC', title:'₹300 Grocery Wallet', cost:350, tierOnly:false, image:'https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=1200&auto=format&fit=crop', description:'Stock your pantry with essentials.' },
+  { id:'PROMO-TRAVEL', title:'Travel Cab ₹150 Off', cost:200, tierOnly:false, image:'https://images.unsplash.com/photo-1470274038469-58bb781bec77?q=80&w=1200&auto=format&fit=crop', description:'Comfortable rides at a discount.' },
+  { id:'PROMO-SPORT', title:'Sportswear 12% Off', cost:450, tierOnly:false, image:'https://images.unsplash.com/photo-1517649763962-0c623066013b?q=80&w=1200&auto=format&fit=crop', description:'Gear up for workouts.' },
+  { id:'PROMO-BOOKS', title:'Books ₹250 Coupon', cost:300, tierOnly:false, image:'https://images.unsplash.com/photo-1519681393784-7f0b6d3f89f2?q=80&w=1200&auto=format&fit=crop', description:'Grab your next read.' },
+]
+
+```
+
+---
+**index.css**
+```css
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Containers */
+.container-responsive { @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8; }
+.card { @apply bg-white rounded-xl shadow-elevated border border-gray-200 transition-shadow; }
+.card:hover { @apply shadow-xl; }
+.card-padding { @apply p-4 sm:p-6; }
+
+/* Buttons */
+.btn { @apply inline-flex items-center justify-center rounded-lg font-semibold transition-all select-none; }
+.btn-primary { @apply btn bg-gradient-to-r from-brand-600 to-indigo-600 text-white shadow-soft hover:shadow-elevated hover:to-brand-700; }
+.btn-secondary { @apply btn bg-gray-100 text-gray-900 hover:bg-gray-200; }
+.btn-claim { @apply btn bg-gradient-to-r from-emerald-500 to-mint-600 text-white hover:shadow-elevated; }
+.btn-redeem { @apply btn bg-gradient-to-r from-emerald-600 to-emerald-700 text-white hover:shadow-elevated; }
+.btn-outline { @apply btn border border-gray-300 text-gray-900 hover:bg-gray-50; }
+.btn-lg { @apply px-5 py-2.5; }
+.btn-icon { @apply inline-flex items-center gap-2; }
+
+/* Chips & badges */
+.chip { @apply inline-flex items-center text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded; }
+.badge { @apply inline-flex items-center px-2.5 py-1 text-xs rounded-full; }
+.badge-gold { @apply badge bg-yellow-100 text-yellow-800 border border-yellow-200; }
+
+/* Scrollbar styling (webkit) */
+.scrollbar::-webkit-scrollbar { height: 10px; }
+.scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 999px; }
+.scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+.scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* Scroll snap helpers */
+.snap-x { scroll-snap-type: x mandatory; }
+.snap-start { scroll-snap-align: start; }
+
+/* Image styles */
+.card-image { @apply w-full object-cover; }
+.hero-image { @apply w-full h-40 sm:h-56 object-cover; }
+
+/* Footer center alignment */
+.footer-center { @apply text-center; }
+
+```
+
+---
+**index.html**
+```html
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Project360 Loyalty</title>
+    <meta name="description" content="Rewards dashboard, offers and redemption history" />
+    <link rel="icon" href="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f4b0.svg">
+  </head>
+  <body class="bg-page text-gray-900">
+    <div id="root"></div>
+    <script type="module" src="/main.jsx"></script>
+  </body>
+</html>
+
+```
+
+---
+**main.jsx**
+```jsx
+
+import React from 'react'
+import { createRoot } from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
+import App from './App.jsx'
+import './index.css'
+import './styles/base.css'
+import './styles/variables.css'
+
+createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </React.StrictMode>
+)
+
+```
+
+---
+**package.json**
+```json
+{
+  "name": "project360",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.23.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.0",
+    "vite": "^5.0.0",
+    "tailwindcss": "^3.4.14",
+    "postcss": "^8.4.35",
+    "autoprefixer": "^10.4.20"
+  }
+}
+```
+
+---
+**pages/Dashboard.jsx**
+```jsx
+
+import React from 'react'
+import PointsSummary from '../components/PointsSummary.jsx'
+import StatCards from '../components/StatCards.jsx'
+import DailyActivities from '../components/DailyActivities.jsx'
+import TransactionList from '../components/TransactionList.jsx'
+import RewardCard from '../components/RewardCard.jsx'
+import { useCustomer } from '../context/CustomerContext.jsx'
+
+export default function Dashboard(){
+  const { promotions } = useCustomer()
+  return (
+    <div className="container-responsive space-y-6">
+      <PointsSummary />
+      <StatCards />
+      <DailyActivities />
+      <TransactionList limit={10} />
+      <section>
+        <h3 className="text-lg font-semibold mb-3">Member Offers</h3>
+        <div className="overflow-x-auto scrollbar snap-x">
+          <div className="flex gap-4 min-w-max pb-2">
+            {promotions.map(p => <div key={p.id} className="w-72 flex-shrink-0 snap-start"><RewardCard promo={p} /></div>)}
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}
+
+```
+
+---
+**pages/Offers.jsx**
+```jsx
+
+import React from 'react'
+import RewardCard from '../components/RewardCard.jsx'
+import { useCustomer } from '../context/CustomerContext.jsx'
+
+export default function Offers(){
+  const { promotions } = useCustomer()
+  return (
+    <div className="container-responsive space-y-4">
+      <h2 className="text-2xl font-semibold">Member Offers</h2>
+      <div className="overflow-x-auto scrollbar snap-x">
+        <div className="flex gap-4 min-w-max pb-2">
+          {promotions.map(p => <div key={p.id} className="w-72 flex-shrink-0 snap-start"><RewardCard promo={p} /></div>)}
+        </div>
+      </div>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {promotions.map(p => <RewardCard key={p.id} promo={p} />)}
+      </div>
+    </div>
+  )
+}
+
+```
+
+---
+**pages/Redeem.jsx**
+```jsx
+
+import React, { useMemo, useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { useCustomer } from '../context/CustomerContext.jsx'
+import Modal from '../components/Modal.jsx'
+
+const STORES = ['Online', 'Pune Fashion Mall', 'Lifestyle Store – Koregaon Park']
+
+export default function Redeem(){
+  const { promoId } = useParams()
+  const navigate = useNavigate()
+  const { promotions, actions, remainingPoints } = useCustomer()
+  const promo = useMemo(() => promotions.find(p => p.id === promoId), [promotions, promoId])
+  const [open, setOpen] = useState(false)
+  const [receipt, setReceipt] = useState(null)
+  const [store, setStore] = useState(STORES[0])
+
+  if (!promo) return <div className="container-responsive"><p className="text-red-600">Promotion not found.</p></div>
+
+  const can = actions.canRedeem(promo)
+  const handleConfirm = () => {
+    if (!can) { alert(`Insufficient points: you have ${remainingPoints} pts, but this costs ${promo.cost} pts.`); return }
+    const res = actions.redeem(promo, store)
+    if (res.ok){ setReceipt(res); setOpen(true) }
+    else { alert(res.error) }
+  }
+
+  const goToHistory = () => { setOpen(false); navigate('/redemptions') }
+
+  return (
+    <div className="container-responsive">
+      <div className="card overflow-hidden">
+        <img src={promo.image} alt={promo.title} className="card-image h-56"/>
+        <div className="card-padding">
+          <h2 className="text-2xl font-semibold">{promo.title}</h2>
+          <p className="text-gray-700 mt-2">{promo.description}</p>
+          <div className="mt-4 grid sm:grid-cols-2 gap-4">
+            <div className="flex items-center justify-between">
+              <span className="text-indigo-700 font-medium">Cost: {promo.cost} pts</span>
+              <span className="text-gray-600">Your balance: {remainingPoints} pts</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <label className="text-sm text-gray-700">Store</label>
+              <select className="border border-gray-300 rounded-lg px-3 py-2" value={store} onChange={e=>setStore(e.target.value)}>
+                {STORES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="mt-6 flex items-center gap-3">
+            <button className="btn-redeem btn-lg btn-icon" disabled={!can} onClick={handleConfirm}><span>Confirm & Redeem</span><span>✅</span></button>
+            <button className="btn-outline btn-lg" onClick={() => navigate('/offers')}>Back to Offers</button>
+          </div>
+        </div>
+      </div>
+
+      <Modal open={open} onClose={()=>setOpen(false)}>
+        <div className="overflow-hidden">
+          <div className="bg-gradient-to-r from-emerald-500 to-mint-600 text-white px-4 py-3 rounded-t-xl">
+            <h3 className="text-lg font-semibold">Redemption Confirmed</h3>
+          </div>
+          <div className="p-4">
+            <div className="flex items-center gap-3">
+              <img src={promo.image} alt="Promo" className="w-16 h-16 object-cover rounded"/>
+              <div>
+                <p className="text-sm text-gray-600">{promo.title}</p>
+                <p className="text-sm text-gray-700">Store: {receipt?.store || store}</p>
+              </div>
+            </div>
+            {receipt && (
+              <div className="mt-4 space-y-2 text-sm">
+                <p><span className="font-medium">Transaction ID:</span> {receipt.txnId}</p>
+                <p><span className="font-medium">Confirmation Code:</span> {receipt.code}</p>
+                <p><span className="font-medium">Date:</span> {receipt.date}</p>
+                <p><span className="font-medium">Remaining Points:</span> {receipt.remaining}</p>
+              </div>
+            )}
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button className="btn-secondary btn-lg" onClick={()=>setOpen(false)}>Close</button>
+              <button className="btn-primary btn-lg" onClick={goToHistory}>Go to Redemption History</button>
+            </div>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  )
+}
+
+```
+
+---
+**pages/Redemptions.jsx**
+```jsx
+
+import React, { useEffect, useState } from 'react'
+
+export default function Redemptions(){
+  const [history, setHistory] = useState([])
+  useEffect(()=>{
+    try { const raw = localStorage.getItem('p360_redemptions'); setHistory(raw? JSON.parse(raw): []) } catch { setHistory([]) }
+  }, [])
+  return (
+    <div className="container-responsive">
+      <h2 className="text-2xl font-semibold mb-4">Redemption History</h2>
+      {history.length === 0 ? (
+        <div className="card"><div className="card-padding text-gray-600">No redemptions yet.</div></div>
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {history.map((r, idx) => (
+            <div key={idx} className="card overflow-hidden">
+              <img src={r.image} alt={r.promoTitle} className="card-image h-40"/>
+              <div className="card-padding text-sm">
+                <p className="text-gray-900 font-medium">{r.promoTitle}</p>
+                <p className="text-gray-700">Store: {r.store}</p>
+                <p><span className="font-medium">Txn ID:</span> {r.txnId}</p>
+                <p><span className="font-medium">Code:</span> {r.code}</p>
+                <p><span className="font-medium">Date:</span> {r.date}</p>
+                <p><span className="font-medium">Remaining:</span> {r.remaining} pts</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+```
+
+---
+**pages/Transactions.jsx**
+```jsx
+
+import React from 'react'
+import { useCustomer } from '../context/CustomerContext.jsx'
+function formatDate(d){ try { return new Date(d).toLocaleDateString('en-IN') } catch { return d } }
+export default function Transactions(){
+  const { transactions, remainingPoints, nextExpiryDate } = useCustomer()
+  return (
+    <div className="container-responsive">
+      <h2 className="text-2xl font-semibold mb-4">Transactions</h2>
+      <div className="grid sm:grid-cols-3 gap-4 mb-6">
+        <div className="card card-padding"><p className="text-sm">Remaining Points</p><p className="text-2xl font-bold">{remainingPoints}</p></div>
+        <div className="card card-padding"><p className="text-sm">Next Expiry</p><p className="text-xl font-semibold">{nextExpiryDate ? formatDate(nextExpiryDate) : '—'}</p></div>
+        <div className="card card-padding"><p className="text-sm">Total Transactions</p><p className="text-2xl font-bold">{transactions.length}</p></div>
+      </div>
+      <div className="card"><div className="card-padding">
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="text-left text-gray-600">
+                <th className="py-2 pr-4">ID</th>
+                <th className="py-2 pr-4">Type</th>
+                <th className="py-2 pr-4">Note</th>
+                <th className="py-2 pr-4">Store</th>
+                <th className="py-2 pr-4">Date</th>
+                <th className="py-2 pr-4">Expiry</th>
+                <th className="py-2 pr-4">Points</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {transactions.map(t => (
+                <tr key={t.id}>
+                  <td className="py-2 pr-4 font-mono">{t.id}</td>
+                  <td className="py-2 pr-4">{t.type}</td>
+                  <td className="py-2 pr-4">{t.note || '—'}</td>
+                  <td className="py-2 pr-4">{t.store || '—'}</td>
+                  <td className="py-2 pr-4">{formatDate(t.date)}</td>
+                  <td className="py-2 pr-4">{t.expiry ? formatDate(t.expiry) : '—'}</td>
+                  <td className={t.points>=0? 'py-2 pr-4 text-emerald-600 font-semibold':'py-2 pr-4 text-amber-600 font-semibold'}>{t.points>=0? `+${t.points}`: `${t.points}`}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div></div>
+    </div>
+  )
+}
+
+```
+
+---
+**postcss.config.js**
+```jsx
+
+export default { plugins: { tailwindcss: {}, autoprefixer: {} } }
+
+```
+
+---
+**services/api.js**
+```jsx
+
+import { customerSeed, transactionsSeed, promotionsSeed } from '../data/mock.js'
+const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false'
+
+// BACKEND ENDPOINTS (for future Spring Boot integration):
+// GET  /api/customer
+// GET  /api/transactions
+// GET  /api/promotions
+// POST /api/claim     { activityId }
+// POST /api/redeem    { promoId, store }
+
+export async function fetchCustomer(){
+  if (USE_MOCK) return structuredClone(customerSeed)
+  // const res = await fetch('/api/customer',{credentials:'include'})
+  // return await res.json()
+  return { id:'cust-001', name:'Member', tier:'Gold' }
+}
+export async function fetchTransactions(){
+  if (USE_MOCK) return structuredClone(transactionsSeed)
+  // const res = await fetch('/api/transactions',{credentials:'include'})
+  // return await res.json()
+  return []
+}
+export async function fetchPromotions(){
+  if (USE_MOCK) return structuredClone(promotionsSeed)
+  // const res = await fetch('/api/promotions',{credentials:'include'})
+  // return await res.json()
+  return []
+}
+
+```
+
+---
+**styles/base.css**
+```css
+
+/* Premium page background */
+.bg-page {
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(79, 70, 229, 0.08), transparent 60%),
+    radial-gradient(800px 400px at 90% 10%, rgba(16, 185, 129, 0.08), transparent 60%),
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
+html, body { height: 100%; }
+body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; color: #111827; }
+img { display:block; max-width:100%; height:auto; }
+a { text-decoration: none; }
+:focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; }
+
+```
+
+---
+**styles/variables.css**
+```css
+:root { --brand: #4f46e5; --accent:#10b981; }
+```
+
+---
+**tailwind.config.js**
+```jsx
+
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./index.html', './**/*.{js,jsx,ts,tsx}'],
+  theme: {
+    extend: {
+      colors: {
+        brand: { 50:'#eef2ff', 100:'#e0e7ff', 600:'#4f46e5', 700:'#4338ca' },
+        mint: { 500:'#10b981', 600:'#0ea5a4' },
+      },
+      boxShadow: {
+        soft: '0 1px 2px rgba(16,24,40,0.04), 0 4px 12px rgba(16,24,40,0.08)',
+        elevated: '0 8px 20px rgba(16,24,40,0.12)',
+      },
+      borderRadius: { xl: '0.9rem' },
+    },
+  },
+  darkMode: false,
+  plugins: [],
+}
+
+```
+
+---
+**utils/currency.js**
+```jsx
+export const formatNumber = (n) => new Intl.NumberFormat("en-IN").format(n)
+```
+
+---
+**vite.config.js**
+```jsx
+
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  server: { port: 5173, open: true }
+})
+
+```
+
+**Instructions**:
+1. Initialize a Vite React project with the name `project360` (type=module).
+2. Install dev dependencies: tailwindcss, postcss, autoprefixer, @vitejs/plugin-react.
+3. Create the exact file structure and paste the contents above.
+4. Run:
+   ```bash
+   npm install
+   npm run dev
+   ```
+5. Open http://localhost:5173
+
+Notes:
+- Use localStorage keys: `p360_transactions`, `p360_redeemed`, `p360_redemptions`.
+- Insufficient points alert appears on Offer card click AND on Redeem confirm if points are low.
+- Redemption page redirects to **/redemptions**, which shows history cards only.
+- Backend wiring comments are inside `services/api.js` & `context/CustomerContext.jsx` for Spring Boot.

@@ -1,0 +1,172 @@
+
+Project360 – Unified Prompt for Loyalty & Promotions (Future Development)
+=======================================================================
+
+Summary
+-------
+Create a React 18 + Vite 5 + Tailwind CSS 3 application named **project360** with React Router v6. The app implements two modules—(4.2) Loyalty Points Accumulation & Redemption and (4.3) Promotions & Personalized Offers—fully integrated. Keep 4.2 data intact, add and extend 4.3 UIs, and ensure offers created in 4.3 can appear in the 4.2 Offers page. The prompt below is canonical for reproducing and evolving the project.
+
+Stack
+-----
+- React 18
+- Vite 5 (type=module)
+- Tailwind CSS 3, PostCSS, Autoprefixer
+- React Router v6
+
+Project Name & Scripts
+----------------------
+- Name: `project360`
+- Scripts: `dev`, `build`, `preview`
+
+Environment & API Toggle
+------------------------
+- `.env.example` → copy to `.env` for backend integration
+```
+VITE_USE_MOCK=false
+VITE_API_BASE=http://localhost:8080
+```
+- When `VITE_USE_MOCK=false`, frontend calls `${VITE_API_BASE}/api/promotions`.
+- Otherwise, it uses local seed data.
+
+LocalStorage Keys
+-----------------
+- `p360_transactions` — transaction list
+- `p360_redeemed` — list of redeemed promo IDs
+- `p360_redemptions` — redemption receipts/history (cards only)
+- `p360_promotions` — (optional) locally-added promotions for launch flow
+
+Entities (Minimal)
+------------------
+**LoyaltyTransaction**
+- TransactionID / `id`
+- CustomerID (implicit via context seed)
+- PointsEarned / PointsRedeemed (`points` positive/negative)
+- Date (`YYYY-MM-DD`)
+- Expiry (nullable)
+- Note, Store
+
+**Promotion**
+- PromoID / `id`
+- Description / `description`
+- DiscountType (`Percentage` | `Fixed` | `Buy X Get Y`)
+- StartDate / EndDate
+- Category (Electronics, Travel, Cooking, Fashion, Grocery, Books, Sports, Cabs)
+- Cost (points)
+- image (URL)
+- audience { tier, minBalance }
+- status (Active/Draft)
+- showInOffers (boolean)
+
+Routing Map
+-----------
+- `/dashboard` — Loyalty dashboard: points summary, stat cards, daily activities, recent transactions, member offers rail
+- `/offers` — Offers page (with search + category filter)
+- `/redeem/:promoId` — Redeem flow (insufficient points alert, receipt modal → history)
+- `/redemptions` — Redemption history (cards only)
+- `/transactions` — Transactions table + KPIs (remaining points, next expiry, total)
+
+Promotions module (4.3)
+-----------------------
+- `/promotions` — Attractive landing page with hero, quick actions, category highlights, workflow cards
+- `/promotions/campaign-builder` — Create campaign: title, discountType, cost, start, end, category, optional image URL, showInOffers toggle
+- `/promotions/audience` — Select tier + minimum points balance
+- `/promotions/review` — Review & Launch (on Launch: add promotion; if showInOffers=true, navigate to `/offers`)
+- `/promotions/performance` — KPI cards + charts (Weekly Redemptions, Offers by Category) + campaigns table
+- `/promotions/analytics` — simple analysis table
+- `/promotions/detail/:id` — per-campaign detail + weekly performance chart
+- `/promotions/tiers` — manage tiers (name, threshold, earnRate, discount%)
+- `/promotions/discount-matrix` — quick editor for tier discounts
+- `/promotions/offer-preview` — preview tier discounts on a sample amount
+
+Core Behaviors
+--------------
+- **4.2 Accumulation:** purchase entry → points preview → transaction confirmation (insufficient points alerts handled where applicable)
+- **4.2 Redemption:** rewards catalog → checkout → successful redemption with receipt persisted in `p360_redemptions` and fake transaction appended; then redirect to `/redemptions`
+- **4.2 Tracking:** dashboard KPIs; statement table; expiry timeline visuals (SVG)
+- **4.3 Creation:** builder → audience → review & launch; newly launched promotions appear in `promotions` array and optionally in `/offers`
+- **Offers Page Filter:** text search across title/description + category dropdown — categories: All | Electronics | Travel | Cooking | Fashion | Grocery | Books | Sports | Cabs
+- **Images:** use high-quality Unsplash URLs per category; if builder image is blank, fallback to category image in review step
+
+Images (Category Defaults)
+-------------------------
+- Electronics: `https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?q=80&w=1200&auto=format&fit=crop`
+- Travel: `https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop`
+- Cooking: `https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1200&auto=format&fit=crop`
+- Fashion: `https://images.unsplash.com/photo-1445205170230-053b83016050?q=80&w=1200&auto=format&fit=crop`
+- Grocery: `https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=1200&auto=format&fit=crop`
+- Books: `https://images.unsplash.com/photo-1519681393784-7f0b6d3f89f2?q=80&w=1200&auto=format&fit=crop`
+- Sports: `https://images.unsplash.com/photo-1517649763962-0c623066013b?q=80&w=1200&auto=format&fit=crop`
+- Cabs: `https://images.unsplash.com/photo-1526045612212-70caf35c14df?q=80&w=1200&auto=format&fit=crop`
+
+Seed Data (Keep 4.2 intact; extend 4.3)
+---------------------------------------
+- Customer: `{ id:'CUST-1001', name:'Yagneswar Mitta', tier:'Gold' }`
+- Transactions: (purchases + one redemption sample)
+- Promotions: include existing 8 + extended list across categories for richer Offers page
+
+UI Style Requirements
+---------------------
+- Tailwind utilities with custom classes:
+  - Containers: `container-responsive`
+  - Cards: `card`, `card-padding`, `card-image`, `hero-image`
+  - Buttons: `btn`, `btn-primary`, `btn-outline`, `btn-secondary`, `btn-claim`, `btn-redeem`, `btn-lg`, `btn-icon`
+  - Chips & badges: `chip`, `badge`, `badge-gold`
+  - Scroll helpers: `scrollbar`, `snap-x`, `snap-start`
+  - Premium background: `.bg-page`
+  - Centered footer: `.footer-center`
+
+Performance Analytics (Charts)
+------------------------------
+- Use simple **SVG** charts (no additional libs) for:
+  - Weekly Redemptions (mock bins, 8 weeks)
+  - Offers by Category (bar distribution)
+
+Backend Endpoints (for Spring Boot later)
+-----------------------------------------
+- `GET /api/customer` — returns current user/tier
+- `GET /api/transactions` — returns transaction list
+- `GET /api/promotions` — returns promotions (with `id`, `title`, `description`, `cost`, `category`, `image`, `discountType`, `start`, `end`, `audience`)
+- `POST /api/claim` — body `{ activityId }` (optional for future)
+- `POST /api/redeem` — body `{ promoId, store }`, responds with `{ txnId, code, date, remaining }`
+
+Integration Notes
+-----------------
+- Prefer context (`CustomerContext`) to aggregate customer, transactions, and promotions.
+- When launching a campaign, append to promotions (and optionally persist to `p360_promotions`).
+- Keep 4.2 seeds **unchanged**; any new promotions are additive.
+
+File Structure (High-level)
+---------------------------
+- `index.html`, `main.jsx`, `vite.config.js`, `tailwind.config.js`, `postcss.config.js`
+- `styles/` → `base.css`, `variables.css`, `index.css`
+- `data/` → `mock.js` (seeds)
+- `services/` → `api.js` (mock vs backend)
+- `context/` → `CustomerContext.jsx`
+- `components/` → `Header.jsx`, `Footer.jsx`, `DailyActivities.jsx`, `PointsSummary.jsx`, `StatCards.jsx`, `RewardCard.jsx`, `Modal.jsx`, `TransactionList.jsx`
+- `pages/`
+  - Loyalty: `Dashboard.jsx`, `Offers.jsx`, `Redeem.jsx`, `Redemptions.jsx`, `Transactions.jsx`
+  - Promotions: `promotions/Promotions.jsx`, `campaigns/` (Builder, Audience, Review), `tiers/` (TierManagement, DiscountMatrix, OfferPreview), `analytics/` (PerformanceDashboard, CampaignAnalytics, CampaignDetail)
+
+Acceptance Criteria
+-------------------
+1. 4.2 screens render with premium background, centered footer, and dark‑on‑light cards.
+2. Offers page shows extended offers with **search + category filter only**; rest functionality unchanged.
+3. Redeem flow shows **insufficient points alert** and **modal receipt**, persists to history, redirects to `/redemptions`.
+4. New promotions launched from 4.3 appear in `/offers` when `showInOffers=true`.
+5. Performance dashboard displays **two charts** (weekly redemptions, category distribution) and a campaigns table.
+6. No breaking changes to 4.2 data shape; additions for 4.3 are additive and non‑destructive.
+
+How to Run
+----------
+1. `npm install`
+2. `npm run dev`
+3. Optional backend: set `.env` from `.env.example` and start Spring Boot on `VITE_API_BASE`.
+
+Change Log Guidance (for future updates)
+----------------------------------------
+- When adding new categories, update:
+  - `CATEGORY_IMAGES` map in Campaign Review
+  - `cats` array in Offers page filter
+- When adding charts, prefer SVG for zero dependency or integrate `recharts` later.
+- For backend persistence of launched promotions, swap local push with `POST /api/promotions` and re‑fetch on success.
+

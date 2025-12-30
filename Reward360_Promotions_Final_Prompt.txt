@@ -1,0 +1,244 @@
+
+Reward360 – Promotions & Personalized Offers Module (Final Prompt)
+=================================================================
+
+Objective
+---------
+Build a front-end module for a retail loyalty program (Reward360) that manages promotions and personalized offers using **dummy in-memory data** only. Deliver three responsive screens, a clean NavBar, modern styling (teal + indigo + light gray), and no backend. Use **React functional components with hooks**.
+
+Tech Stack & Libraries
+----------------------
+- **React** (Vite template)
+- **React Router**: `react-router-dom` (HashRouter) for navigation
+- **Material UI (MUI)** for the top navigation bar only: `@mui/material @emotion/react @emotion/styled`
+- **CSS**: a single `styles.css` for module styling (cards, forms, grids)
+- **Images**: placeholders via URLs or `/assets` folder
+
+Project Structure (Files)
+------------------------
+```
+index.html                      # Vite entry with <div id="root">
+src/
+  main.jsx                      # React entrypoint
+  App.jsx                       # Routing shell & shared state provider
+  styles.css                    # Teal + indigo + light gray theme styles
+  components/
+    NavBar.jsx                  # MUI AppBar-based navigation
+    PromotionsList.jsx          # Screen 1 – list cards with images & badges
+    PromotionDetail.jsx         # Screen 2 – detailed view & banner
+    CreatePromotion.jsx         # Screen 3 – form & image preview
+```
+
+Data Model (Dummy Only)
+-----------------------
+- **Promotion**
+  - `PromoID: string`
+  - `Description: string`
+  - `DiscountType: 'Percentage' | 'Fixed Amount' | 'BOGO' | 'Free Shipping' | 'Tier-based'`
+  - `StartDate: ISO date string (yyyy-mm-dd)`
+  - `EndDate: ISO date string (yyyy-mm-dd)`
+  - `imageUrl: string (URL or /assets path)`
+- Store an **array** of promotions in React state. Optionally persist to `localStorage`.
+
+Screens & Functionality
+-----------------------
+1) **Promotions List Screen** (`/`)
+   - Display all promotions in a **responsive grid of cards** (3 → 2 → 1 columns by viewport).
+   - Each card shows: image (cover), type badge (teal/indigo/gray), description, ID, duration.
+   - **View Details** button navigates to `#/promotion/:id`.
+   - Styled with `styles.css` (cards, badges, buttons).
+
+2) **Promotion Detail Screen** (`/promotion/:id`)
+   - Show a **large banner image** with overlay title and discount type badge.
+   - Details rendered as labeled rows: PromoID, DiscountType, StartDate, EndDate.
+   - **Back to List** button returns to `/`.
+
+3) **Create Promotion Screen** (`/create`)
+   - Form fields: PromoID (text), Description (text), DiscountType (select), StartDate (date), EndDate (date), optional Image upload.
+   - **Validation**:
+     - Required: PromoID, Description, StartDate, EndDate.
+     - Unique PromoID (check against existing IDs).
+     - EndDate must be **after** StartDate.
+   - Image upload: uses `URL.createObjectURL(file)` to preview.
+   - On submit: prepend to promotions state, navigate to `/`.
+   - Reset button clears inputs & preview.
+   - Accessibility: `aria-invalid`, `aria-describedby` on invalid fields.
+
+Navigation (MUI NavBar)
+-----------------------
+- Use MUI **AppBar + Toolbar** with brand (Reward360) and buttons.
+- Buttons link to `#/` (Promotions), `#/offers` (stub), `#/create` (Create Campaign), `#/dashboard` (stub).
+- Primary action (Create Campaign) is a **contained indigo** button with hover darkening.
+- Mobile: keep simple desktop layout; optional hamburger can be added later.
+
+Styling Guidelines (styles.css)
+-------------------------------
+- Palette: **Teal** (`#14b8a6`, `#0f766e`), **Indigo** (`#6366f1`, `#4f46e5`), **Light Gray** background.
+- Cards: rounded corners (`14px`), soft shadow, hover image scale.
+- Badges: pill shape, placed over the image bottom-left.
+- Forms: grid layout (2 columns → 1 column on mobile), inputs with focus ring in indigo.
+- Detail banner: gradient overlay, title + badge.
+
+Routing
+-------
+- Use `HashRouter` to avoid server config.
+- Routes:
+  - `/` → PromotionsList
+  - `/promotion/:id` → PromotionDetail
+  - `/create` → CreatePromotion
+  - `/offers` and `/dashboard` → simple stub components (optional)
+
+State Management
+----------------
+- Keep promotions array in `App.jsx` state.
+- Pass down handlers:
+  - `onCreate(newPromo)` to add promotion and redirect.
+- Optional: persist to localStorage on change & hydrate on load.
+
+Accessibility
+-------------
+- Provide `alt` text for images.
+- Use semantic headings (`h2`, `h3`).
+- Inputs with `aria-invalid` and error messages bound via `aria-describedby`.
+
+Responsive Behavior
+-------------------
+- **Grid**: 3 columns on desktop, 2 on tablets, 1 on narrow/mobile.
+- **Form**: 2 columns on desktop → 1 on mobile, adequate touch targets.
+
+Placeholder Images
+------------------
+- Use Unsplash URLs or local assets: `/assets/sale-banner.jpg`, `/assets/fashion.jpg`, etc.
+- Replace `imageUrl` in dummy data accordingly.
+
+Install & Run (Vite)
+--------------------
+```bash
+# Create project
+npm create vite@latest reward360-promotions -- --template react
+cd reward360-promotions
+
+# Install dependencies
+npm install
+npm install react-router-dom @mui/material @emotion/react @emotion/styled
+
+# Add files as per structure above
+# Ensure index.html has: <script type="module" src="/src/main.jsx"></script>
+
+# Start dev server
+npm run dev
+```
+
+Acceptance Criteria Checklist
+-----------------------------
+- [ ] Three screens exist and are reachable via NavBar & router.
+- [ ] Promotions list renders dummy data as cards with images & badges.
+- [ ] Detail page shows banner and all fields for selected promotion.
+- [ ] Create form validates required fields, uniqueness, and date ordering.
+- [ ] Image upload previews instantly using `URL.createObjectURL`.
+- [ ] On successful submit, new promotion appears at the **top** of the list.
+- [ ] UI adheres to teal + indigo + light gray theme; responsive layout works.
+- [ ] No backend calls; data in memory only (optional localStorage persistence).
+
+Implementation Notes (Copy-ready Components)
+-------------------------------------------
+- **NavBar.jsx (MUI)**
+```
+import React from 'react';
+import AppBar from '@mui/material/AppBar';
+import Toolbar from '@mui/material/Toolbar';
+import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+
+export default function NavBar() {
+  return (
+    <AppBar position="static" sx={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', boxShadow: 'none' }}>
+      <Toolbar sx={{ maxWidth: 1200, mx: 'auto', width: '100%', display: 'flex', justifyContent: 'space-between' }}>
+        <Typography variant="h6" sx={{ color: '#4f46e5', fontWeight: 700 }}>Reward360</Typography>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button href="#/" variant="text" sx={{ color: '#334155', fontWeight: 500 }}>Promotions</Button>
+          <Button href="#/offers" variant="text" sx={{ color: '#334155', fontWeight: 500 }}>Offers</Button>
+          <Button href="#/dashboard" variant="text" sx={{ color: '#334155', fontWeight: 500 }}>Performance</Button>
+          <Button href="#/create" variant="contained" sx={{ backgroundColor: '#4f46e5', '&:hover': { backgroundColor: '#4338ca' } }}>Create Campaign</Button>
+        </Box>
+      </Toolbar>
+    </AppBar>
+  );
+}
+```
+
+- **App.jsx (Router + State shell)**
+```
+import React, { useMemo, useState } from 'react';
+import { HashRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import NavBar from './components/NavBar';
+import PromotionsList from './components/PromotionsList';
+import PromotionDetail from './components/PromotionDetail';
+import CreatePromotion from './components/CreatePromotion';
+import './styles.css';
+
+function Shell() {
+  const initialPromotions = useMemo(() => [
+    { PromoID: 'PRM-001', Description: 'New Year Mega Sale – 25% off', DiscountType: 'Percentage', StartDate: '2025-12-25', EndDate: '2026-01-05', imageUrl: 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=1200&auto=format&fit=crop' },
+    { PromoID: 'PRM-002', Description: 'BOGO on fashion basics', DiscountType: 'BOGO', StartDate: '2025-12-20', EndDate: '2026-01-10', imageUrl: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1200&auto=format&fit=crop' },
+    { PromoID: 'PRM-003', Description: '₹500 off on electronics over ₹5000', DiscountType: 'Fixed Amount', StartDate: '2025-12-18', EndDate: '2026-02-01', imageUrl: 'https://images.unsplash.com/photo-1518779578993-ec3579fee39f?q=80&w=1200&auto=format&fit=crop' },
+  ], []);
+
+  const [promotions, setPromotions] = useState(initialPromotions);
+  const navigate = useNavigate();
+
+  const handleCreate = (newPromo) => {
+    setPromotions((prev) => [newPromo, ...prev]);
+    navigate('/');
+  };
+
+  return (
+    <div className="app-shell">
+      <NavBar />
+      <main className="content">
+        <Routes>
+          <Route path="/" element={<PromotionsList promotions={promotions} />} />
+          <Route path="/promotion/:id" element={<PromotionDetail promotions={promotions} />} />
+          <Route path="/create" element={<CreatePromotion onCreate={handleCreate} existingIds={promotions.map(p => p.PromoID)} />} />
+          <Route path="/offers" element={<div className="empty"><h3>Offers (stub)</h3></div>} />
+          <Route path="/dashboard" element={<div className="empty"><h3>Performance (stub)</h3></div>} />
+        </Routes>
+      </main>
+      <footer className="footer"><span>© {new Date().getFullYear()} Reward360 — Retail Loyalty Program</span></footer>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <HashRouter>
+      <Shell />
+    </HashRouter>
+  );
+}
+```
+
+- **PromotionsList.jsx** – grid cards (as provided earlier)
+- **PromotionDetail.jsx** – detail with banner (as provided earlier) using `useParams` to find promotion.
+- **CreatePromotion.jsx** – validated form with image preview (as provided earlier).
+- **styles.css** – modern palette and responsive rules (as provided earlier).
+
+Notes
+-----
+- Keep **no backend**; all data resides in component state.
+- If using local assets, ensure Vite serves them from `/public/assets`.
+- For corporate networks, if port 5173 is blocked, run: `npx vite --port 5174`.
+
+Deliverables
+------------
+- Source files listed under Project Structure.
+- Working dev server at `http://localhost:5173/` (or chosen port).
+
+Future Extensions (Optional)
+----------------------------
+- LocalStorage persistence for promotions.
+- Filters & sorting (by DiscountType, StartDate).
+- Tier-based discount rules & preview tooltips.
+- Analytics widgets under `/dashboard`.
+
