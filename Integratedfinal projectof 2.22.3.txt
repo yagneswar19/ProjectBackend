@@ -1,0 +1,243 @@
+
+Project360 — Final Integrated Prompt (Single Navbar + Promotions Module)
+======================================================================
+
+Objective
+---------
+Build a **single, integrated React (Vite) project** for a retail loyalty program (Project360) that combines:
+1) The **original premium Project360 UI** (Dashboard, Offers, Redeem, Redemptions, Transactions)
+2) The **Reward360 Promotions module** (Promotions List, Promotion Detail, Create Promotion)
+
+**One global navbar** must be used across the entire application (no second navbar). Clicking **Promotions** navigates to the promotions module. When a campaign is created, it **immediately appears on the single Offers page**. Use **in-memory data with optional localStorage persistence**; no backend required.
+
+Tech Stack
+---------
+- **React** (functional components + hooks), **Vite** build
+- **React Router v6** (BrowserRouter) for routing
+- **Tailwind CSS** for layout and components (cards, grids, buttons)
+- **MUI libraries included only for component parity**: `@mui/material`, `@emotion/react`, `@emotion/styled` (do **not** render a second navbar; keep MUI AppBar file for reference)
+
+Dependencies & Scripts (package.json)
+-------------------------------------
+Add these (versions can be latest stable):
+- dependencies:
+  - `react`, `react-dom`, `react-router-dom@^6`
+  - `@mui/material`, `@emotion/react`, `@emotion/styled` (kept for module parity)
+- devDependencies:
+  - `@vitejs/plugin-react`, `vite`
+  - `tailwindcss`, `postcss`, `autoprefixer`
+
+Scripts:
+```json
+{
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  }
+}
+```
+
+Global Styling Guidelines
+-------------------------
+- **Header**: premium gradient `from-blue-600 to-indigo-600`, sticky top, white text.
+- **Cards**: rounded corners, soft shadow, light border.
+- **Buttons**: primary (blue/indigo), secondary (gray), consistent hover states.
+- **Grids**: responsive (1 → 2 → 3 columns based on viewport).
+- **Promotions module palette**: **Teal** (`#14b8a6`, `#0f766e`), **Indigo** (`#6366f1`, `#4f46e5`), **Light gray** background.
+- **Promotions banner**: full-width image with gradient overlay + badge + title.
+
+Project Structure (Files)
+-------------------------
+```
+index.html
+src/
+  main.jsx                 # App bootstrap (BrowserRouter)
+  App.jsx                  # Routes + global layout (Header/Footer)
+  index.css                # Tailwind entry + global utilities
+  tailwind.config.js
+  postcss.config.js
+  vite.config.js
+
+  components/
+    Header.jsx             # SINGLE global navbar (Dashboard, Offers, Transactions, Redemptions, Promotions)
+    Footer.jsx             # Simple centered footer
+
+    RewardCard.jsx         # Offer card (image, title, cost, Redeem)
+    TransactionList.jsx    # Transaction table/list
+    DailyActivities.jsx    # Claim actions (earn points)
+
+    # Promotions module components (KEPT, no second navbar rendered):
+    NavBar.jsx             # MUI AppBar (file present for reference; NOT rendered in pages)
+    PromotionsList.jsx     # Promotions grid of cards (image cover, type badge, ID, duration, View Details)
+    PromotionDetail.jsx    # Banner overlay + labeled details (PromoID, DiscountType, StartDate, EndDate)
+    CreatePromotion.jsx    # Validated form + image URL/file preview; on submit add to promotions and redirect to /offers
+
+  pages/
+    Dashboard.jsx          # Summary (balance, today earned, redeemed), activities, recent transactions, offers grid
+    Offers.jsx             # Single Offers page (lists `promotions` as redeemable offers)
+    Redeem.jsx             # Confirm redeem flow (alerts, receipt-like result)
+    Redemptions.jsx        # History note/cards (front-end demo)
+    Transactions.jsx       # Transactions table + metrics
+
+    # Promotions module pages (render ONLY global Header):
+    Promotions.jsx         # Page wrapper (renders PromotionsList; NO MUI NavBar)
+    PromotionDetail.jsx    # Page wrapper (renders PromotionDetail; NO MUI NavBar)
+    CreatePromotion.jsx    # Page wrapper (renders CreatePromotion; NO MUI NavBar)
+
+  context/
+    CustomerContext.jsx    # Shared state: customer, transactions, promotions + actions
+
+  services/
+    api.js                 # Dummy fetch for customer/promotions (seeds)
+
+  styles/
+    promotions.css         # Teal + indigo + light gray; cards, badges, forms, banner overlay
+```
+
+Routing
+-------
+Use **BrowserRouter** (`react-router-dom@6`). Define these routes inside `<Routes>`:
+- `/` → redirect to `/dashboard`
+- `/dashboard` → Dashboard
+- `/offers` → Offers (the **only** offers page)
+- `/redeem/:promoId` → Redeem
+- `/redemptions` → Redemptions
+- `/transactions` → Transactions
+- **Promotions module**:
+  - `/promotions` → Promotions (List screen)
+  - `/promotions/:id` → Promotion Detail
+  - `/promotions/create` → Create Promotion (campaign generator)
+
+Global Navbar (Header.jsx)
+--------------------------
+Render **one** navbar (top header) everywhere with these links in order:
+1) Dashboard → `/dashboard`
+2) Offers → `/offers`
+3) Transactions → `/transactions`
+4) Redemptions → `/redemptions`
+5) Promotions → `/promotions`
+
+> Do **not** render the module MUI AppBar (`NavBar.jsx`) in any page. Keep the file in repo for parity; use only the global header.
+
+Data Model (in-memory + optional persistence)
+---------------------------------------------
+**Promotion / Offer** (rendered by Offers and Promotions):
+```ts
+{
+  id: string,              // PromoID (unique)
+  title: string,           // Offer title
+  description: string,     // Offer description
+  image: string,           // URL or object URL (file preview)
+  cost: number,            // points cost to redeem
+  discountType?: 'Percentage' | 'Fixed Amount' | 'BOGO' | 'Free Shipping' | 'Tier-based',
+  startDate?: 'yyyy-mm-dd',
+  endDate?: 'yyyy-mm-dd',
+  tierOnly?: boolean
+}
+```
+
+**Transaction** (demo):
+```ts
+{
+  id: string,
+  type: 'CLAIM' | 'REDEMPTION',
+  points: number,          // positive for earn, negative for redeem
+  date: 'yyyy-mm-dd',
+  expiry?: 'yyyy-mm-dd' | null,
+  note?: string,
+  store?: string
+}
+```
+
+State Management (CustomerContext.jsx)
+--------------------------------------
+- `customer`: basic member info
+- `promotions`: array of offers; **hydrate** from seeds + `localStorage['p360_promotions']`
+- `transactions`: array of transactions (claims + redemptions); persist to `localStorage['p360_transactions']`
+- `redeemedPromoIds`: IDs of already redeemed promos; persist to `localStorage['p360_redeemed']`
+
+Derived values:
+- `remainingPoints`: sum of `transactions[].points`
+- `todayPoints`: earned points for today
+- `redeemedTotal`: total redeemed (absolute value of negative points)
+
+Actions:
+- `addPromotion(offer)`: prepend the new campaign to `promotions` and persist to `localStorage['p360_promotions']`
+- `claimActivity({ id, points, note, store })`: add a positive points transaction
+- `canRedeem(promo)`: `remainingPoints >= promo.cost` and promo not already redeemed
+- `redeem(promo, store='Online')`: add a negative points transaction, add to `redeemedPromoIds`, and save a simple receipt to `localStorage['p360_redemptions']`
+
+Promotions Module — Screens & Validation
+---------------------------------------
+1) **Promotions List** (`/promotions`)
+   - Responsive grid (3 → 2 → 1) of **cards**: cover image, **discount type badge** (teal/indigo), description/title, **ID**, **duration** (`startDate → endDate`).
+   - “View Details” button navigates to **`/promotions/:id`**.
+
+2) **Promotion Detail** (`/promotions/:id`)
+   - Banner image with **gradient overlay**, **discount type badge**, title.
+   - Labeled rows: `PromoID`, `DiscountType`, `StartDate`, `EndDate`, `Description`.
+   - Buttons: **Back to List** → `/promotions`, **Go to Offers** → `/offers`.
+
+3) **Create Promotion** (`/promotions/create`)
+   - Form fields: **PromoID (text)**, **Title (text)**, **Description (text)**, **DiscountType (select)**, **Points Cost (number)**, **StartDate (date)**, **EndDate (date)**, **Image URL (text)**, optional **file upload** with preview (`URL.createObjectURL`).
+   - **Validation**:
+     - Required: `PromoID`, `Title`, `Description`, `StartDate`, `EndDate`, `Points Cost (>0)`
+     - **Unique `PromoID`** (check against current promotions)
+     - `EndDate` must be **after** `StartDate`
+   - On submit: **prepend** to `promotions` via `addPromotion(offer)`, **redirect** to `/offers`.
+   - Reset clears inputs and preview.
+
+Offers Page (Single)
+--------------------
+- Lists the **same `promotions` array** (seeds + created campaigns).
+- Cards use `RewardCard.jsx`; clicking **Redeem** runs `canRedeem` guard and navigates to `/redeem/:promoId`.
+
+Redeem Flow
+-----------
+- `/redeem/:promoId` shows: title, description, **Cost vs Your Balance**, store selection.
+- Confirm adds a negative points transaction, marks promo redeemed, stores a simple receipt (`localStorage['p360_redemptions']`).
+- On success, alert and navigate to **Redemptions** or **Offers**.
+
+Transactions & Redemptions Pages
+--------------------------------
+- **Transactions**: table of all current transactions; top metrics: remaining points, total transactions.
+- **Redemptions**: front-end demo page; a note that history can be persisted (optional).
+
+Tailwind Utilities (Examples)
+-----------------------------
+- Containers: `max-w-5xl mx-auto px-4`
+- Card: `bg-white border border-gray-200 rounded-lg shadow p-4`
+- Buttons:
+  - Primary: `inline-flex items-center rounded px-4 py-2 text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700`
+  - Secondary: `inline-flex items-center rounded px-4 py-2 text-sm font-medium bg-gray-200 text-gray-900 hover:bg-gray-300`
+- Badge: `inline-block text-xs px-2 py-1 rounded bg-indigo-600 text-white`
+
+Run & Build
+-----------
+```bash
+npm install
+npm run dev   # http://localhost:5173
+npm run build
+npm run preview
+```
+
+Acceptance Criteria (Point-by-Point)
+------------------------------------
+- [ ] One **global navbar** only (Header.jsx): **Dashboard, Offers, Transactions, Redemptions, Promotions**.
+- [ ] Clicking **Promotions** navigates to `/promotions` and renders the **Promotions List** screen.
+- [ ] **Promotions List** shows cards with image, discount badge, ID, duration, and **View Details**.
+- [ ] **Promotion Detail** shows banner overlay + labeled fields; buttons work.
+- [ ] **Create Promotion** validates required fields, unique `PromoID`, `EndDate > StartDate`, and supports image URL or file preview.
+- [ ] On submit, the new campaign **appears at the top** of the **single Offers page**.
+- [ ] **Offers** page renders all promotions (seed + created) and supports the **Redeem** flow.
+- [ ] **Redeem** page adds a transaction and marks promo redeemed; success redirects and/or shows alert.
+- [ ] **Transactions** shows current session transactions and metrics.
+- [ ] Styling, layout, and palette adhere to Tailwind and promotions CSS guidelines.
+- [ ] No backend calls; data is in React state; optional localStorage persistence for `promotions`, `transactions`, `redeemedPromoIds`, `redemptions`.
+
+Notes
+-----
+- Keep `components/NavBar.jsx` (MUI AppBar) **in the repo** for parity but **do not render it** in any page; the global Header is the **only** navbar.
+- Use **BrowserRouter** (not HashRouter) for integration into the premium Project360 layout.
+- Ensure **route order** and **link labels** match exactly to avoid navigation confusion.
